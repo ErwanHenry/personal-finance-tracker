@@ -32,7 +32,7 @@ export default function Home() {
 
           <p className="text-xl text-gray-600 max-w-2xl">
             Suivez vos dépenses, créez des budgets intelligents et recevez des conseils personnalisés
-            propulsés par l'IA pour optimiser votre santé financière.
+            propulsés par l&apos;IA pour optimiser votre santé financière.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -58,7 +58,7 @@ export default function Home() {
             Tout ce dont vous avez besoin
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Une suite complète d'outils pour gérer vos finances personnelles avec simplicité et efficacité
+            Une suite complète d&apos;outils pour gérer vos finances personnelles avec simplicité et efficacité
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
                 <Target className="w-6 h-6 text-purple-600" />
               </div>
-              <CardTitle>Objectifs d'épargne</CardTitle>
+              <CardTitle>Objectifs d&apos;épargne</CardTitle>
               <CardDescription>
                 Définissez vos objectifs financiers et suivez votre progression avec des visualisations claires
               </CardDescription>
@@ -182,7 +182,7 @@ export default function Home() {
               Prêt à prendre le contrôle de vos finances ?
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Commencez dès aujourd'hui à gérer intelligemment votre argent.
+              Commencez dès aujourd&apos;hui à gérer intelligemment votre argent.
               Aucune carte de crédit requise.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
