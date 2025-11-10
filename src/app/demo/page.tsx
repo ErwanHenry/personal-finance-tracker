@@ -14,9 +14,9 @@ import type {
   Transaction,
   Budget,
   SavingsGoal,
-  Insight,
-  CashFlowPoint
+  Insight
 } from '@/components'
+import type { CashFlowPoint } from '@/types'
 import {
   Wallet,
   TrendingDown,
