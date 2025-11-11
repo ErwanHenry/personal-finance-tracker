@@ -18,12 +18,12 @@ export async function GET(
     const transaction = await prisma.transaction.findFirst({
       where: {
         id,
-        account: {
+        bankAccount: {
           userId: session.user.id
         }
       },
       include: {
-        account: {
+        bankAccount: {
           select: {
             name: true,
             type: true
@@ -69,7 +69,7 @@ export async function PUT(
     const oldTransaction = await prisma.transaction.findFirst({
       where: {
         id,
-        account: {
+        bankAccount: {
           userId: session.user.id
         }
       }
@@ -93,7 +93,7 @@ export async function PUT(
         date: date ? new Date(date) : undefined
       },
       include: {
-        account: {
+        bankAccount: {
           select: {
             name: true,
             type: true
@@ -104,12 +104,14 @@ export async function PUT(
 
     // Adjust account balance if amount or type changed
     if (amount !== undefined || type !== undefined) {
-      const oldBalance = oldTransaction.type === 'INCOME' ? oldTransaction.amount : -oldTransaction.amount
-      const newBalance = transaction.type === 'INCOME' ? transaction.amount : -transaction.amount
+      const oldAmount = Number(oldTransaction.amount)
+      const newAmount = Number(transaction.amount)
+      const oldBalance = oldTransaction.type === 'INCOME' ? oldAmount : -oldAmount
+      const newBalance = transaction.type === 'INCOME' ? newAmount : -newAmount
       const balanceChange = newBalance - oldBalance
 
       await prisma.bankAccount.update({
-        where: { id: transaction.accountId },
+        where: { id: transaction.bankAccountId },
         data: {
           balance: {
             increment: balanceChange
@@ -145,7 +147,7 @@ export async function DELETE(
     const transaction = await prisma.transaction.findFirst({
       where: {
         id,
-        account: {
+        bankAccount: {
           userId: session.user.id
         }
       }
@@ -164,9 +166,10 @@ export async function DELETE(
     })
 
     // Adjust account balance
-    const balanceChange = transaction.type === 'INCOME' ? -transaction.amount : transaction.amount
+    const amount = Number(transaction.amount)
+    const balanceChange = transaction.type === 'INCOME' ? -amount : amount
     await prisma.bankAccount.update({
-      where: { id: transaction.accountId },
+      where: { id: transaction.bankAccountId },
       data: {
         balance: {
           increment: balanceChange

@@ -18,7 +18,7 @@ export async function GET() {
       where: { userId }
     })
 
-    const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+    const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0)
 
     // Get current month transactions
     const startOfMonth = new Date()
@@ -30,11 +30,11 @@ export async function GET() {
     endOfMonth.setDate(0)
     endOfMonth.setHours(23, 59, 59, 999)
 
-    const accountIds = accounts.map(a => a.id)
+    const bankAccountIds = accounts.map(a => a.id)
 
     const monthTransactions = await prisma.transaction.findMany({
       where: {
-        accountId: { in: accountIds },
+        bankAccountId: { in: bankAccountIds },
         date: {
           gte: startOfMonth,
           lte: endOfMonth
@@ -44,19 +44,19 @@ export async function GET() {
 
     const monthIncome = monthTransactions
       .filter(t => t.type === 'INCOME')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + Number(t.amount), 0)
 
     const monthExpenses = monthTransactions
       .filter(t => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + Number(t.amount), 0)
 
     // Get recent transactions
     const recentTransactions = await prisma.transaction.findMany({
       where: {
-        accountId: { in: accountIds }
+        bankAccountId: { in: bankAccountIds }
       },
       include: {
-        account: {
+        bankAccount: {
           select: { name: true, type: true }
         }
       },
@@ -73,13 +73,13 @@ export async function GET() {
       budgets.map(async (budget) => {
         const spent = monthTransactions
           .filter(t => t.type === 'EXPENSE' && t.category === budget.category)
-          .reduce((sum, t) => sum + t.amount, 0)
+          .reduce((sum, t) => sum + Number(t.amount), 0)
 
         return {
           ...budget,
           spent,
-          remaining: Math.max(budget.amount - spent, 0),
-          percentage: Math.min((spent / budget.amount) * 100, 100)
+          remaining: Math.max(Number(budget.amount) - spent, 0),
+          percentage: Math.min((spent / Number(budget.amount)) * 100, 100)
         }
       })
     )
@@ -91,7 +91,9 @@ export async function GET() {
     })
 
     const goalsWithProgress = goals.map(goal => {
-      const percentage = (goal.currentAmount / goal.targetAmount) * 100
+      const currentAmount = Number(goal.currentAmount)
+      const targetAmount = Number(goal.targetAmount)
+      const percentage = (currentAmount / targetAmount) * 100
       const daysLeft = goal.deadline
         ? Math.ceil((goal.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
         : null
@@ -99,9 +101,9 @@ export async function GET() {
       return {
         ...goal,
         percentage: Math.min(percentage, 100),
-        remaining: goal.targetAmount - goal.currentAmount,
+        remaining: targetAmount - currentAmount,
         daysLeft,
-        isComplete: goal.currentAmount >= goal.targetAmount
+        isComplete: currentAmount >= targetAmount
       }
     })
 
@@ -119,7 +121,7 @@ export async function GET() {
 
       const dayTransactions = await prisma.transaction.findMany({
         where: {
-          accountId: { in: accountIds },
+          bankAccountId: { in: bankAccountIds },
           date: {
             gte: date,
             lte: endDate
@@ -129,16 +131,16 @@ export async function GET() {
 
       const income = dayTransactions
         .filter(t => t.type === 'INCOME')
-        .reduce((sum, t) => sum + t.amount, 0)
+        .reduce((sum, t) => sum + Number(t.amount), 0)
 
       const expense = dayTransactions
         .filter(t => t.type === 'EXPENSE')
-        .reduce((sum, t) => sum + t.amount, 0)
+        .reduce((sum, t) => sum + Number(t.amount), 0)
 
       // Calculate balance up to this day
       const balanceUpToDate = await prisma.transaction.findMany({
         where: {
-          accountId: { in: accountIds },
+          bankAccountId: { in: bankAccountIds },
           date: {
             lte: endDate
           }
@@ -146,7 +148,7 @@ export async function GET() {
       })
 
       const balance = balanceUpToDate.reduce((sum, t) => {
-        return sum + (t.type === 'INCOME' ? t.amount : -t.amount)
+        return sum + (t.type === 'INCOME' ? Number(t.amount) : -Number(t.amount))
       }, 0)
 
       cashFlowData.push({

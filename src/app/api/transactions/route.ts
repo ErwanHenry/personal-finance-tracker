@@ -12,24 +12,24 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const accountId = searchParams.get('accountId')
+    const bankAccountId = searchParams.get('bankAccountId')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
     const where: any = {
-      account: {
+      bankAccount: {
         userId: session.user.id
       }
     }
 
-    if (accountId) {
-      where.accountId = accountId
+    if (bankAccountId) {
+      where.bankAccountId = bankAccountId
     }
 
     const transactions = await prisma.transaction.findMany({
       where,
       include: {
-        account: {
+        bankAccount: {
           select: {
             name: true,
             type: true
@@ -73,10 +73,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { accountId, amount, type, category, description, date } = body
+    const { bankAccountId, amount, type, category, description, date } = body
 
     // Validate required fields
-    if (!accountId || !amount || !type || !category) {
+    if (!bankAccountId || !amount || !type || !category) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Verify the account belongs to the user
     const account = await prisma.bankAccount.findFirst({
       where: {
-        id: accountId,
+        id: bankAccountId,
         userId: session.user.id
       }
     })
@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
     // Create the transaction
     const transaction = await prisma.transaction.create({
       data: {
-        accountId,
+        userId: session.user.id,
+        bankAccountId,
         amount: parseFloat(amount),
         type,
         category,
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
         date: date ? new Date(date) : new Date()
       },
       include: {
-        account: {
+        bankAccount: {
           select: {
             name: true,
             type: true
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
     // Update account balance
     const balanceChange = type === 'INCOME' ? amount : -amount
     await prisma.bankAccount.update({
-      where: { id: accountId },
+      where: { id: bankAccountId },
       data: {
         balance: {
           increment: balanceChange

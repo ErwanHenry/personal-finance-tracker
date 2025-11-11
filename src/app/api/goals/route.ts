@@ -22,15 +22,17 @@ export async function GET() {
 
     // Calculate progress percentage for each goal
     const goalsWithProgress = goals.map(goal => {
-      const percentage = (goal.currentAmount / goal.targetAmount) * 100
+      const currentAmount = Number(goal.currentAmount)
+      const targetAmount = Number(goal.targetAmount)
+      const percentage = (currentAmount / targetAmount) * 100
       const daysLeft = goal.deadline ? Math.ceil((goal.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
 
       return {
         ...goal,
         percentage: Math.min(percentage, 100),
-        remaining: goal.targetAmount - goal.currentAmount,
+        remaining: targetAmount - currentAmount,
         daysLeft,
-        isComplete: goal.currentAmount >= goal.targetAmount
+        isComplete: currentAmount >= targetAmount
       }
     })
 

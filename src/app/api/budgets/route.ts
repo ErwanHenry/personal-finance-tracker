@@ -35,11 +35,11 @@ export async function GET() {
           where: { userId: session.user.id },
           select: { id: true }
         })
-        const accountIds = userAccounts.map(a => a.id)
+        const bankAccountIds = userAccounts.map(a => a.id)
 
         const transactions = await prisma.transaction.findMany({
           where: {
-            accountId: { in: accountIds },
+            bankAccountId: { in: bankAccountIds },
             category: budget.category,
             type: 'EXPENSE',
             date: {
@@ -49,13 +49,15 @@ export async function GET() {
           }
         })
 
-        const spent = transactions.reduce((sum, t) => sum + t.amount, 0)
-        const percentage = (spent / budget.amount) * 100
+        const spent = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
+        const budgetAmount = Number(budget.amount)
+        const percentage = (spent / budgetAmount) * 100
 
         return {
           ...budget,
+          amount: budgetAmount,
           spent,
-          remaining: budget.amount - spent,
+          remaining: budgetAmount - spent,
           percentage: Math.min(percentage, 100)
         }
       })
@@ -81,27 +83,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { category, amount, period } = body
+    const { name, category, amount, period, startDate, endDate } = body
 
     // Validate required fields
-    if (!category || !amount) {
+    if (!name || !category || !amount || !startDate || !endDate) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, category, amount, startDate, endDate' },
         { status: 400 }
       )
     }
 
-    // Check if budget already exists for this category
+    // Check if budget already exists for this category in this period
     const existing = await prisma.budget.findFirst({
       where: {
         userId: session.user.id,
-        category
+        category,
+        startDate: {
+          lte: new Date(endDate)
+        },
+        endDate: {
+          gte: new Date(startDate)
+        }
       }
     })
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Budget already exists for this category' },
+        { error: 'Budget already exists for this category in this period' },
         { status: 409 }
       )
     }
@@ -110,9 +118,12 @@ export async function POST(request: NextRequest) {
     const budget = await prisma.budget.create({
       data: {
         userId: session.user.id,
+        name,
         category,
         amount: parseFloat(amount),
-        period: period || 'MONTHLY'
+        period: period || 'MONTHLY',
+        startDate: new Date(startDate),
+        endDate: new Date(endDate)
       }
     })
 
